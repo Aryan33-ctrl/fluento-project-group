@@ -9,6 +9,9 @@ export function ProtectedRoute() {
   if (loading) return <Loading />;
   return authDisabled || user ? <Outlet /> : <Navigate to="/login" replace state={{ from: loc.pathname }} />;
 }
+
+
+
 export function PublicOnlyRoute() {
   const { user, loading } = useAuth();
   if (loading) return <Loading />;

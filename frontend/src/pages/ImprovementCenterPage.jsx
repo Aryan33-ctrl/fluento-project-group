@@ -4,6 +4,8 @@ import { Target, Sparkles, Check } from 'lucide-react';
 import { improvementApi, errorMessage } from '../api/client.js';
 import { useAsync } from '../hooks/useAsync.js';
 import { useToast } from '../context/ToastContext.jsx';
+
+
 import { Skeleton, EmptyState, ErrorState, Spinner } from '../components/ui.jsx';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];

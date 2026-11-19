@@ -21,6 +21,9 @@ export default function ReportPage() {
         <div className="flex gap-1 rounded-xl bg-white p-1 shadow-card" role="group" aria-label="Date range">
           {RANGES.map(([d, l]) => <button key={d} onClick={() => setDays(d)} aria-pressed={days === d} className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${days === d ? 'bg-brand text-white' : 'text-muted hover:bg-brand-soft'}`}>{l}</button>)}
         </div>
+
+
+        
       </div>
       {error ? <ErrorState message={error} onRetry={reload} /> : loading ? <div className="space-y-4"><Skeleton className="h-28" /><Skeleton className="h-72" /></div> : data.series.length === 0 ? (
         <EmptyState icon={BarChart3} title="No completed sessions in this period" text="Finish a practice session to start tracking your progress." action={<Link to="/studio" className="btn-primary">Start Practicing</Link>} />
