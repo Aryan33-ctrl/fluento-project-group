@@ -8,6 +8,9 @@ export function errorHandler(err, req, res, _next) {
   if (err instanceof ZodError) {
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid input', details: err.flatten().fieldErrors } });
   }
+
+
+  
   if (err instanceof multer.MulterError) {
     const msg = err.code === 'LIMIT_FILE_SIZE' ? 'Audio file is too large' : 'Upload failed';
     return res.status(413).json({ error: { code: 'UPLOAD', message: msg } });
