@@ -6,7 +6,7 @@ export default function NotFoundPage() {
 
       
       <h1 className="text-3xl font-bold tracking-tight">This page doesn’t exist</h1>
-      <p className="text-muted">The link may be broken or the page may have moved.</p>
+      <p className="text-muted">The link may be broken or the page may have moved try after sometime.</p>
       <Link to="/" className="btn-primary mt-3">Back to home</Link>
     </div>
   );
