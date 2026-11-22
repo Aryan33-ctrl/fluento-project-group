@@ -1,5 +1,5 @@
 import { env } from '../config/env.js';
-import { getOpenAI } from './openaiClient.js';
+import { getGemini } from './geminiClient.js';
 import { evaluationSchema } from '../validators/schemas.js';
 
 export const RUBRIC = `Score each dimension 0-100 using these anchors:
@@ -30,9 +30,9 @@ export function finalizeEvaluation(parsed, { transcript, audioMetrics }) {
   return {
     ...valid,
     overallScore: computeOverall(valid),
-    pronunciationScore: null, // not measured: transcript-based evaluation cannot assess pronunciation
+    pronunciationScore: null,
     transcript,
-    deliveryMetrics: audioMetrics, // MEASURED from audio timestamps
+    deliveryMetrics: audioMetrics,
     basis: {
       measured: ['durationSeconds', 'wordsPerMinute', 'pauseCount', 'fillerWordCount'],
       estimated: ['fluencyScore', 'grammarScore', 'vocabularyScore', 'clarityScore', 'sentenceConstructionScore', 'relevanceScore', 'overallScore'],
@@ -43,15 +43,12 @@ export function finalizeEvaluation(parsed, { transcript, audioMetrics }) {
 
 export async function evaluateSpeech({ transcript, practiceType, topic, difficulty, audioMetrics }) {
   const user = JSON.stringify({ practiceType, topic: topic || 'free speaking', difficulty, measuredDeliveryMetrics: audioMetrics, transcript });
-  let lastErr;
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await getOpenAI().chat.completions.create({
-      model: env.OPENAI_EVAL_MODEL, temperature: 0.2, response_format: { type: 'json_object' },
-      messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: user }],
-    });
-    try {
-      return finalizeEvaluation(JSON.parse(res.choices[0].message.content), { transcript, audioMetrics });
-    } catch (e) { lastErr = e; }
-  }
-  throw new Error(`AI returned invalid evaluation: ${lastErr?.message}`);
+  const model = getGemini().getGenerativeModel({ model: env.GEMINI_MODEL, generationConfig: { temperature: 0.2 }, responseMimeType: 'application/json' });
+  const res = await model.generateContent([
+    { role: 'system', parts: [{ text: SYSTEM }] },
+    { role: 'user', parts: [{ text: user }] },
+  ]);
+  const text = res?.response?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error('Empty response from Gemini');
+  return finalizeEvaluation(JSON.parse(text), { transcript, audioMetrics });
 }

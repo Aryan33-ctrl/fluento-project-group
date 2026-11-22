@@ -1,16 +1,39 @@
-import { env } from '../config/env.js';
-import { getOpenAI } from './openaiClient.js';
+﻿import { env } from '../config/env.js';
+import { getGemini } from './geminiClient.js';
 import { planSchema } from '../validators/schemas.js';
 
-const SYSTEM = `You create a 7-day English speaking improvement plan from a learner's recent evaluated sessions.
-Base every task on the actual weaknesses/mistakes provided. Return ONLY JSON:
-{"goals":[...],"recommendations":[...],"tasks":[{"type":"grammar|vocabulary|speaking|interview|fluency|sentence","title":"","description":"","estimatedMinutes":10,"dayOfWeek":0-6}]}
-Provide 5-10 tasks spread across the week, mixing task types according to the weakest categories.`;
-
+/**
+ * Generate a 7‑day improvement plan based on recent session summaries.
+ *
+ * @param {Array<Object>} summaries – array of objects containing:
+ *   practiceType, topic, scores {fluency, grammar, vocabulary, clarity},
+ *   weaknesses, grammarMistakes, nextTopics, etc.
+ * @returns {Promise<Object>} – validated plan object matching `planSchema`.
+ */
 export async function generatePlan(summaries) {
-  const res = await getOpenAI().chat.completions.create({
-    model: env.OPENAI_EVAL_MODEL, temperature: 0.4, response_format: { type: 'json_object' },
-    messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: JSON.stringify(summaries) }],
+  const userPrompt = JSON.stringify({ summaries });
+
+  const model = getGemini().getGenerativeModel({
+    model: env.GEMINI_MODEL,
+    generationConfig: { temperature: 0.3 },
+    responseMimeType: 'application/json',
   });
-  return planSchema.parse(JSON.parse(res.choices[0].message.content));
+
+  const res = await model.generateContent([
+    {
+      role: 'system',
+      parts: [
+        {
+          text: `You are an expert English coach. Create a concrete 7‑day study plan based on the provided session summaries. Return **only** JSON matching the schema defined in src/validators/schemas.js (planSchema).`,
+        },
+      ],
+    },
+    { role: 'user', parts: [{ text: userPrompt }] },
+  ]);
+
+  const text = res?.response?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error('Empty response from Gemini while generating plan');
+
+  const parsed = planSchema.parse(JSON.parse(text));
+  return parsed;
 }

@@ -10,9 +10,15 @@ const schema = z.object({
   JWT_EXPIRES_IN: z.string().default('7d'),
   COOKIE_SECURE: z.string().optional(),
   DISABLE_AUTH: z.string().optional(),
+  // OpenAI vars kept for backward compatibility
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_TRANSCRIBE_MODEL: z.string().default('whisper-1'),
   OPENAI_EVAL_MODEL: z.string().default('gpt-4o-mini'),
+  // New Gemini & Groq vars
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
+  GROQ_API_KEY: z.string().optional(),
+  GROQ_TRANSCRIBE_MODEL: z.string().default('whisper-large-v3'),
   STORAGE_DIR: z.string().default('./private-storage'),
   MAX_AUDIO_MB: z.coerce.number().default(25),
   SMTP_HOST: z.string().optional(),
