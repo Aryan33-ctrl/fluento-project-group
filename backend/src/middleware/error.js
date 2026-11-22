@@ -15,7 +15,10 @@ export function errorHandler(err, req, res, _next) {
     const msg = err.code === 'LIMIT_FILE_SIZE' ? 'Audio file is too large' : 'Upload failed';
     return res.status(413).json({ error: { code: 'UPLOAD', message: msg } });
   }
-  if (err?.name === 'CastError') return res.status(400).json({ error: { code: 'BAD_ID', message: 'Invalid identifier' } });
+  if (err?.name === 'CastError') {
+    logger.error({ err: err.message, path: err.path, value: err.value, stack: err.stack, reqPath: req.path }, 'MongoDB cast error');
+    return res.status(400).json({ error: { code: 'BAD_ID', message: 'Invalid identifier' } });
+  }
   if (err?.code === 11000) return res.status(409).json({ error: { code: 'DUPLICATE', message: 'Resource already exists' } });
   if (err?.expose) {
     return res.status(err.status || 400).json({ error: { code: err.code, message: err.message, details: err.details } });

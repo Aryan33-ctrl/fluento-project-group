@@ -25,7 +25,7 @@ export default function ReportPage() {
 
         
       </div>
-      {error ? <ErrorState message={error} onRetry={reload} /> : loading ? <div className="space-y-4"><Skeleton className="h-28" /><Skeleton className="h-72" /></div> : data.series.length === 0 ? (
+      {error ? <ErrorState message={error} onRetry={reload} /> : loading ? <div className="space-y-4"><Skeleton className="h-28" /><Skeleton className="h-72" /></div> : !data || data.series.length === 0 ? (
         <EmptyState icon={BarChart3} title="No completed sessions in this period" text="Finish a practice session to start tracking your progress." action={<Link to="/studio" className="btn-primary">Start Practicing</Link>} />
       ) : (
         <>

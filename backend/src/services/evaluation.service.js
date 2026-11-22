@@ -1,4 +1,3 @@
-import { env } from '../config/env.js';
 import { getGemini } from './geminiClient.js';
 import { evaluationSchema } from '../validators/schemas.js';
 
@@ -43,12 +42,17 @@ export function finalizeEvaluation(parsed, { transcript, audioMetrics }) {
 
 export async function evaluateSpeech({ transcript, practiceType, topic, difficulty, audioMetrics }) {
   const user = JSON.stringify({ practiceType, topic: topic || 'free speaking', difficulty, measuredDeliveryMetrics: audioMetrics, transcript });
-  const model = getGemini().getGenerativeModel({ model: env.GEMINI_MODEL, generationConfig: { temperature: 0.2 }, responseMimeType: 'application/json' });
-  const res = await model.generateContent([
-    { role: 'system', parts: [{ text: SYSTEM }] },
-    { role: 'user', parts: [{ text: user }] },
+  const res = await getGemini().generateContent([
+    { role: 'user', parts: [{ text: `${SYSTEM}\n\nINPUT:\n${user}` }] },
   ]);
-  const text = res?.response?.candidates?.[0]?.content?.parts?.[0]?.text;
+  const text = res?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) throw new Error('Empty response from Gemini');
-  return finalizeEvaluation(JSON.parse(text), { transcript, audioMetrics });
+  const cleaned = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  let parsed;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini returned invalid JSON');
+  }
+  return finalizeEvaluation(parsed, { transcript, audioMetrics });
 }

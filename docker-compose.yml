@@ -13,7 +13,7 @@ x-backend-env: &backend-env
   GROQ_API_KEY: ${GROQ_API_KEY:-}
   GROQ_TRANSCRIBE_MODEL: ${GROQ_TRANSCRIBE_MODEL:-whisper-large-v3}
   GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-  GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+  GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3-flash-preview}
   STORAGE_DIR: /data/private-storage
   MAX_AUDIO_MB: ${MAX_AUDIO_MB:-25}
   SMTP_HOST: ${SMTP_HOST:-}

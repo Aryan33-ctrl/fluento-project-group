@@ -1,11 +1,20 @@
 import mongoose from 'mongoose';
 import { PracticeSession } from '../models/PracticeSession.js';
 
-const oid = (id) => new mongoose.Types.ObjectId(String(id));
+const oid = (id) => {
+  const value = String(id || '');
+  if (!mongoose.Types.ObjectId.isValid(value)) return null;
+  return new mongoose.Types.ObjectId(value);
+};
 const CATS = ['fluencyScore', 'grammarScore', 'vocabularyScore', 'clarityScore'];
 
 export async function overview(userId) {
   const uid = oid(userId);
+  if (!uid) return {
+    totalSessions: 0, completedSessions: 0, totalSpeakingSeconds: 0,
+    averages: { overall: null, fluency: null, grammar: null, vocabulary: null, clarity: null, pronunciation: null },
+    latestScore: null, weeklyChart: [], recentSessions: [], recommendedNext: [], recommendations: [], streakDays: 0,
+  };
   const [totals] = await PracticeSession.aggregate([
     { $match: { userId: uid } },
     { $group: {
@@ -67,9 +76,16 @@ async function streak(uid) {
 
 export async function analytics(userId, days = 30) {
   const uid = oid(userId);
+  if (!uid) return {
+    rangeDays: days, series: [], weekly: [], categoryAverages: { fluency: null, grammar: null, vocabulary: null, clarity: null },
+    weakestCategory: null, strongestCategory: null, bestSession: null,
+    improvement: { overall: null, fluency: null, grammar: null, vocabulary: null },
+    totalSpeakingSeconds: 0, consistency: { activeDays: 0, rangeDays: days, percent: 0 }, sessionsPerWeek: 0,
+  };
   const since = new Date(Date.now() - days * 864e5);
-  const sessions = await PracticeSession.find({ userId: uid, status: 'COMPLETED', createdAt: { $gte: since } })
+  const allSessions = await PracticeSession.find({ userId: uid, status: 'COMPLETED' })
     .sort({ createdAt: 1 }).select('createdAt duration practiceType evaluation').lean();
+  const sessions = allSessions.filter((session) => new Date(session.createdAt).getTime() >= since.getTime());
   const series = sessions.map((s) => ({
     id: s._id, date: s.createdAt, overall: s.evaluation.overallScore, fluency: s.evaluation.fluencyScore,
     grammar: s.evaluation.grammarScore, vocabulary: s.evaluation.vocabularyScore, clarity: s.evaluation.clarityScore,
